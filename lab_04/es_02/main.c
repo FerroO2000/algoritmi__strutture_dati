@@ -91,7 +91,6 @@ int main()
             break;
         case e_del_cod:
             delCodCmd(list);
-            // printList(list);
             break;
         case e_del_date:
             delDateCmd(list);
