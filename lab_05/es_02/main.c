@@ -15,6 +15,7 @@ typedef struct
     tile_t *tiles;
 } board_t;
 
+void printSolution(tile_t *tiles, int tileNum, int usedTileNum, board_t *initialBoard);
 tile_t rotateTile(tile_t *t);
 board_t *makeBoard(int r, int c);
 void freeBoard(board_t *b);
@@ -23,7 +24,7 @@ void printBoard(board_t *b);
 tile_t *getBoardTile(board_t *b, int row, int col);
 board_t *copyBoard(board_t *in);
 int getScore(board_t *b);
-board_t *solutionRec(tile_t *t, bool *tileMask, int currTile, int tileNum, int currBoardPos, board_t *currBoard);
+board_t *solutionRec(tile_t *t, int currTile, int tileNum, int currBoardPos, board_t *currBoard);
 
 int main()
 {
@@ -72,15 +73,20 @@ int main()
         }
     }
 
-    printBoard(board);
-    printf("\n\n");
-
     fclose(fp);
 
-    int unTiles = (tileNum - usedTileCount);
-    tile_t unusedTiles[unTiles * 2];
-    bool mask[unTiles * 2];
-    j = 0;
+    printSolution(tiles, tileNum, usedTileCount, board);
+
+    freeBoard(board);
+    free(tiles);
+
+    return 0;
+}
+
+void printSolution(tile_t *tiles, int tileNum, int usedTileNum, board_t *initialBoard)
+{
+    int i, j = 0, unusedTileNum = (tileNum - usedTileNum);
+    tile_t unusedTiles[unusedTileNum];
     for (i = 0; i < tileNum; i++)
     {
         if (tiles[i].inUse)
@@ -88,24 +94,18 @@ int main()
             continue;
         }
         unusedTiles[j] = tiles[i];
-        mask[j] = false;
         j++;
     }
-    for (i = 0; i < unTiles; i++)
-    {
-        unusedTiles[i + unTiles] = rotateTile(&unusedTiles[i]);
-        mask[i + unTiles] = false;
-    }
 
-    board_t *fBoard = solutionRec(unusedTiles, mask, 0, unTiles * 2, 0, board);
+    printf("scacchiera iniziale:\n");
+    printBoard(initialBoard);
 
-    printBoard(fBoard);
+    board_t *finalBoard = solutionRec(unusedTiles, 0, unusedTileNum, 0, initialBoard);
+    printf("\n\n\n\nsoluzione:\n");
+    printBoard(finalBoard);
+    printf("\n\npunteggio: %d", getScore(finalBoard));
 
-    printf("%d", getScore(fBoard));
-
-    freeBoard(board);
-
-    return 0;
+    freeBoard(finalBoard);
 }
 
 tile_t rotateTile(tile_t *t)
@@ -154,10 +154,10 @@ void printBoard(board_t *b)
         {
             if (!getBoardTile(b, i, j)->inUse)
             {
-                printf("nnnnnnnnnn   ");
+                printf("   ---------   ");
                 continue;
             }
-            printf("%c %d --- %c %d   ", getBoardTile(b, i, j)->hColor, getBoardTile(b, i, j)->hValue, getBoardTile(b, i, j)->vColor, getBoardTile(b, i, j)->vValue);
+            printf("   %c %d / %c %d   ", getBoardTile(b, i, j)->hColor, getBoardTile(b, i, j)->hValue, getBoardTile(b, i, j)->vColor, getBoardTile(b, i, j)->vValue);
         }
     }
 }
@@ -173,7 +173,7 @@ int getScore(board_t *b)
         {
             if (j == 0)
             {
-                prevClr = getBoardTile(b, i, j)->hColor; //b->tiles[i + j].hColor;
+                prevClr = getBoardTile(b, i, j)->hColor;
                 tmp += getBoardTile(b, i, j)->hValue;
                 continue;
             }
@@ -226,20 +226,16 @@ board_t *copyBoard(board_t *in)
     return res;
 }
 
-board_t *solutionRec(tile_t *t, bool *tileMask, int currTile, int tileNum, int currBoardPos, board_t *currBoard)
+board_t *solutionRec(tile_t *t, int currTile, int tileNum, int currBoardPos, board_t *currBoard)
 {
     if (currTile >= tileNum)
     {
-
-        /*printf("\n");
-        printBoard(currBoard);
-        printf("\nscore: %d", getScore(currBoard));*/
         return currBoard;
     }
 
     if (currBoard->tiles[currBoardPos].inUse)
     {
-        return solutionRec(t, tileMask, currTile, tileNum, currBoardPos + 1, currBoard);
+        return solutionRec(t, currTile, tileNum, currBoardPos + 1, currBoard);
     }
 
     int i, bestScore = -1, tmpScore;
@@ -247,41 +243,33 @@ board_t *solutionRec(tile_t *t, bool *tileMask, int currTile, int tileNum, int c
 
     for (i = 0; i < tileNum; i++)
     {
-        if (tileMask[i])
+        if (t[i].inUse)
         {
             continue;
         }
-        tileMask[i] = true;
+
         t[i].inUse = true;
         currBoard->tiles[currBoardPos] = t[i];
-        currBoard->tiles[currBoardPos].inUse = true;
-        //printf("\n");
-        //printBoard(currBoard);
-        tmpB = solutionRec(t, tileMask, currTile + 1, tileNum, currBoardPos + 1, currBoard);
+        tmpB = solutionRec(t, currTile + 1, tileNum, currBoardPos + 1, currBoard);
         tmpScore = getScore(tmpB);
         if (tmpScore > bestScore)
         {
             bestScore = tmpScore;
-            bestB = copyBoard(tmpB); //tmpB;
+            bestB = copyBoard(tmpB);
         }
-        tileMask[i] = false;
+
+        currBoard->tiles[currBoardPos] = rotateTile(&t[i]);
+        tmpB = solutionRec(t, currTile + 1, tileNum, currBoardPos + 1, currBoard);
+        tmpScore = getScore(tmpB);
+        if (tmpScore > bestScore)
+        {
+            bestScore = tmpScore;
+            bestB = copyBoard(tmpB);
+        }
+
+        t[i].inUse = false;
         currBoard->tiles[currBoardPos].inUse = false;
     }
 
     return bestB;
-
-    /*board_t *tmpB = malloc(sizeof(currBoard)), *bestB = malloc(sizeof(currBoard));
-    for (i = currTile; i < tileNum; i++)
-    {
-        currBoard[currBoardPos] = t[i];
-        tmpB = solutionRec(t, currTile + 1, tileNum, bRow, bCol, currBoard + 1, currBoard);
-        tmpScore = getScore(tmpB, bRow, bCol);
-        if (tmpScore > bestScore)
-        {
-            bestScore = tmpScore;
-            bestB = tmpB;
-        }
-    }
-
-    return bestB;*/
 }
