@@ -28,6 +28,7 @@ character_t _newCharacter(char *tmpCod, char *tmpName, char *tmpClass, int hp, i
 void _printCharacterFunction(ll_item_key_t inC);
 bool _matchCharacterFunction(ll_item_key_t cod, ll_item_t c);
 struct _equip _newEquip();
+void _freeCharacterFunction(ll_item_t item);
 
 character_list_t newCharacterListFromFile(char *fileName)
 {
@@ -40,7 +41,7 @@ character_list_t newCharacterListFromFile(char *fileName)
     int nC = 0, hp, mp, atk, def, mag, spr;
     char tmpCod[STR_BUFF_SIZE], tmpName[STR_BUFF_SIZE], tmpClass[STR_BUFF_SIZE], lineBuff[FILE_LINE_BUFF_SIZE];
     character_list_t cl = malloc(sizeof(struct _characterList));
-    cl->list = newLinkedList();
+    cl->list = newLinkedList(_freeCharacterFunction, _matchCharacterFunction, _printCharacterFunction);
 
     while (fgets(lineBuff, FILE_LINE_BUFF_SIZE, fp))
     {
@@ -63,7 +64,7 @@ void freeCharacterList(character_list_t cl)
 
 void printCharacterList(character_list_t cl)
 {
-    printLinkedList(cl->list, _printCharacterFunction);
+    printLinkedList(cl->list);
 }
 
 void addCharacter(character_list_t cl, char *cod, char *name, char *class, int hp, int mp, int atk, int def, int mag, int spr)
@@ -74,13 +75,19 @@ void addCharacter(character_list_t cl, char *cod, char *name, char *class, int h
 
 void removeCharacter(character_list_t cl, char *cod)
 {
-    removeItem(cl->list, cod, _matchCharacterFunction);
+    ll_item_t remC = removeItem(cl->list, cod);
+    if (remC == NULL)
+    {
+        printf("[ERRORE: elimina personaggio] personaggio non trovalto\n");
+        return;
+    }
     --cl->count;
+    _freeCharacterFunction(remC);
 }
 
 character_t getCharacter(character_list_t cl, char *cod)
 {
-    character_t c = (character_t)getItem(cl->list, cod, _matchCharacterFunction);
+    character_t c = (character_t)getItem(cl->list, cod);
     return c;
 }
 
@@ -212,4 +219,13 @@ bool _matchCharacterFunction(ll_item_key_t cod, ll_item_t c)
 {
     character_t tmpC = (character_t)c;
     return strcmp(tmpC->cod, cod) == 0;
+}
+
+void _freeCharacterFunction(ll_item_t inC)
+{
+    character_t c = (character_t)inC;
+    free(c->cod);
+    free(c->name);
+    free(c->class);
+    free(c);
 }

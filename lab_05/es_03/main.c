@@ -33,8 +33,7 @@ int main()
     character_list_t cl = newCharacterListFromFile("pg.txt");
     inventory_t inv = newInventoryFromFile("inventario.txt");
 
-    /*
-    bool stop = false;
+        bool stop = false;
     cmd_e cmd;
     while (!stop)
     {
@@ -73,7 +72,7 @@ int main()
         default:
             break;
         }
-    }*/
+    }
 
     freeCharacterList(cl);
     freeInventory(inv);

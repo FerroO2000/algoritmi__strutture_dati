@@ -9,6 +9,7 @@ struct _inventory
 };
 
 object_t _newObject(char *tmpName, char *tmpKind, int hp, int mp, int atk, int def, int mag, int spr);
+void _freeObject(object_t *o);
 
 inventory_t newInventoryFromFile(char *fileName)
 {
@@ -38,6 +39,11 @@ inventory_t newInventoryFromFile(char *fileName)
 
 void freeInventory(inventory_t inv)
 {
+    int i;
+    for (i = 0; i < inv->objectCount; i++)
+    {
+        _freeObject(&inv->objects[i]);
+    }
     free(inv->objects);
     free(inv);
 }
@@ -84,4 +90,10 @@ object_t _newObject(char *tmpName, char *tmpKind, int hp, int mp, int atk, int d
     o.kind = strdup(tmpKind);
     o.stats = newStatistics(hp, mp, atk, def, mag, spr);
     return o;
+}
+
+void _freeObject(object_t *o)
+{
+    free(o->name);
+    free(o->kind);
 }
