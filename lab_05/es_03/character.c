@@ -118,18 +118,18 @@ void printCharacter(character_t c)
         }
     }
 
-    if (hp < 0)
-        hp = 0;
-    if (mp < 0)
-        mp = 0;
-    if (atk < 0)
-        atk = 0;
-    if (def < 0)
-        def = 0;
-    if (mag < 0)
-        mag = 0;
-    if (spr < 0)
-        spr = 0;
+    if (hp <= 0)
+        hp = 1;
+    if (mp <= 0)
+        mp = 1;
+    if (atk <= 0)
+        atk = 1;
+    if (def <= 0)
+        def = 1;
+    if (mag <= 0)
+        mag = 1;
+    if (spr <= 0)
+        spr = 1;
 
     statistics_t tmpStats = newStatistics(hp, mp, atk, def, mag, spr);
     printf("statistiche con equipaggiamento:\n");
